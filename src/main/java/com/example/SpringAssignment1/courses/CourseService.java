@@ -1,28 +1,44 @@
 package com.example.SpringAssignment1.courses;
 
+import com.example.SpringAssignment1.exceptions.CourseNotFoundException;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import java.util.Collection;
+
 
 @Service
-public class CourseService {
+@Transactional
+@RequiredArgsConstructor
+public class CourseService implements CourseServiceInterface {
+    public final CourseRepository repository;
 
-    public ArrayList<Course> getCourses(){
-        String[] names = {"CSC", "CSC", "CSC", "CSC", "CSC"};
-        int[] codes = {113, 212, 121, 223, 313};
-        ArrayList<Course> courses = new ArrayList<>();
+    @Override
+    public Course addCourse(Course course) {
+        return this.repository.save(course);
+    }
 
-//		UNDERGRADUATE COURSES
-        courses.add( new Course("CSC", 113, Category.UNDERGRADUATE));
-        courses.add( new Course("CSC", 121, Category.UNDERGRADUATE));
-        courses.add( new Course("CSC", 212, Category.UNDERGRADUATE));
-        courses.add( new Course("CSC", 313, Category.UNDERGRADUATE));
-        courses.add( new Course("CSC", 312, Category.UNDERGRADUATE));
+    @Override
+    public Course getCourse(Long id) {
+        return this.repository.findById(id).orElseThrow(
+                ()->new CourseNotFoundException("The course with id: '" + id + "' was not found.")
+        );
+    }
 
-//		FOUNDATION COURSES
-        courses.add( new Course("CSC", 113, Category.FOUNDATION));
-        courses.add( new Course("CSC", 121, Category.FOUNDATION));
+    @Override
+    public Boolean removeCourse(Long id) {
+        this.repository.deleteById(id);
+        return true;
+    }
 
-        return courses;
+    @Override
+    public Course updateCourse(Course course) {
+        return this.repository.save(course);
+    }
+
+    @Override
+    public Collection<Course> getCourses() {
+        return this.repository.findAll();
     }
 }

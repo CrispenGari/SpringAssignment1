@@ -1,26 +1,31 @@
 package com.example.SpringAssignment1.courses;
+import jakarta.persistence.*;
 import lombok.*;
 import java.io.Serializable;
 
-//@Entity
-//@Table(name="courses")
+@Entity
+@Table(name="courses")
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class Course implements Serializable {
+
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Id
+    private Long id;
+
+    @Column(nullable = false, length = 3, name = "name")
     private String name;
+
+    @Column(nullable = false, name = "code")
     private int code;
+
+    @Column(nullable = false, name="displayName", unique = true, length = 6)
+    private  String displayName;
+
+    @Column(nullable = false, name = "category")
     private Category category;
 
-    @Override
-    public String toString() {
-        String courseCode =  "" + (this.category.equals(Category.FOUNDATION) ? this.code + "F" :  this.code);
-        return (
-                "Course{" +
-                "name='" + this.name + '\'' +
-                ", code='" + courseCode +'\''+
-                ", category='" + this.category + '\'' +
-                '}'
-        );
-    }
+    @Column(nullable = false, name = "description", length = 500)
+    private String description;
 }

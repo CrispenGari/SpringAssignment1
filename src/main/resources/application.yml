@@ -7,8 +7,8 @@ spring:
       additional-paths: src/main/java
       exclude: static/**,public/**
   datasource:
-    password: root
-    url: jdbc:postgresql://localhost:5432/posts
+    password: postgres
+    url: jdbc:postgresql://localhost:5432/csc
     username: postgres
   jpa:
     hibernate:

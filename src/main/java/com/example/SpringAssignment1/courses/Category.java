@@ -1,5 +1,7 @@
 package com.example.SpringAssignment1.courses;
+import lombok.Getter;
 
+@Getter
 public enum Category {
 
         FOUNDATION("FOUNDATION"),
@@ -9,9 +11,6 @@ public enum Category {
         private final String category;
         Category(String category){
             this.category =category;
-        }
-        public String getCategory() {
-            return this.category;
         }
 
 }
