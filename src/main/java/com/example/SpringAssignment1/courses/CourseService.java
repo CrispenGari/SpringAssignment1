@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
+import java.util.Optional;
 
 
 @Service
@@ -24,6 +25,12 @@ public class CourseService implements CourseServiceInterface {
         return this.repository.findById(id).orElseThrow(
                 ()->new CourseNotFoundException("The course with id: '" + id + "' was not found.")
         );
+    }
+
+    @Override
+    public Boolean isCourseAvailable(String displayName){
+        Optional<Course> c = this.repository.findByDisplayName(displayName);
+        return  c.isPresent();
     }
 
     @Override

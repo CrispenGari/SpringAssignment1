@@ -7,24 +7,42 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
+import java.util.ArrayList;
 import java.util.Date;
-
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
 //    Handling specific exception
-
     @ExceptionHandler(CourseNotFoundException.class)
-    public ResponseEntity<?> animalNotFound(CourseNotFoundException exception, WebRequest request){
-        ErrorType errorType = new ErrorType(new Date(), exception.getMessage(), request.getDescription(false));
-        return new ResponseEntity<>(errorType, HttpStatus.NOT_FOUND);
+    public ResponseEntity<?> courseNotFound(CourseNotFoundException exception, WebRequest request){
+        ArrayList<ErrorType> errors = new ArrayList<>();
+        errors.add(
+                new ErrorType(
+                        new Date(), exception.getMessage(),
+                    request.getDescription(false), "course"
+            )
+        );
+        return new ResponseEntity<>(errors, HttpStatus.NOT_FOUND);
     }
 
-    //    Global exception handling
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<?> globalExceptionHandling(Exception exception, WebRequest request){
-        return new ResponseEntity<>(
-                new ErrorType(new Date(), exception.getMessage(), request.getDescription(false))
-                , HttpStatus.INTERNAL_SERVER_ERROR);
+    @ExceptionHandler(CourseAlreadyExistsException.class)
+    public ResponseEntity<?> courseAlreadyExists(CourseAlreadyExistsException exception, WebRequest request){
+        ArrayList<ErrorType> errors = new ArrayList<>();
+        errors.add(
+                new ErrorType(
+                        new Date(), exception.getMessage(),
+                        request.getDescription(false), "course"
+                )
+        );
+        return new ResponseEntity<>(errors, HttpStatus.OK);
     }
+
+
+   //    Global exception handling
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<?> globalExceptionHandling(Exception exception, WebRequest request){
+//        return new ResponseEntity<>(
+//                new ErrorType(new Date(), exception.getMessage(), request.getDescription(false))
+//                , HttpStatus.INTERNAL_SERVER_ERROR);
+//    }
 }

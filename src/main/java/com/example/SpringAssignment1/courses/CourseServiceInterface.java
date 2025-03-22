@@ -1,5 +1,4 @@
 package com.example.SpringAssignment1.courses;
-
 import java.util.Collection;
 
 public interface CourseServiceInterface {
@@ -8,4 +7,5 @@ public interface CourseServiceInterface {
     Boolean removeCourse(Long id);
     Course updateCourse(Course course);
     Collection<Course> getCourses();
+    Boolean isCourseAvailable(String displayName);
 }

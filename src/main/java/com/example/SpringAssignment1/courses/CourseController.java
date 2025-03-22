@@ -1,11 +1,17 @@
 package com.example.SpringAssignment1.courses;
 
-import com.example.SpringAssignment1.types.CourseBody;
+import com.example.SpringAssignment1.exceptions.CourseAlreadyExistsException;
+import com.example.SpringAssignment1.types.AddCourseBody;
+import com.example.SpringAssignment1.types.UpdateCourseBody;
+import jakarta.validation.Valid;
 import lombok.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collection;
+import java.util.*;
 
 @RestController
 @RequestMapping(path = "/api/v1/courses")
@@ -14,53 +20,67 @@ public class CourseController {
     private final CourseService service;
 
     @PostMapping(path = "/add")
-    public ResponseEntity<Course> addCourse(@RequestBody CourseBody body) throws Exception {
+    public ResponseEntity<Course> addCourse(@Valid @RequestBody AddCourseBody body) throws Exception {
         Course course = new Course();
-        // do validation
-         String [] allowedCourses = {"undergraduate", "honours", "foundation"};
-        if(body.getName().length() != 3){
-            throw new Exception(
-                    "Course can not be added because the Course Name should contain exactly 3 characters, but got '" +
-                            body.getName() + "'."
-            );
-        }
-        if(Integer.toString(body.getCode()).length() != 3){
-            throw new Exception(
-                    "Course can not be added because the Course Code should contain exactly 3 characters, but got '" +
-                    body.getCode() + "'."
-            );
-        }
-        course.setName(body.getName().toUpperCase());
+        course.setName(body.getName().toUpperCase().trim());
         course.setCode(body.getCode());
         course.setDescription(body.getDescription());
         course.setCategory(body.getCategory());
         String ext =  course.getCategory().equals(Category.FOUNDATION) ? "F" : "";
         String displayName = course.getName() + " " + course.getCode() + ext;
         course.setDisplayName(displayName);
+        if (service.isCourseAvailable(course.getDisplayName())){
+            throw new CourseAlreadyExistsException("The course '" + course.getDisplayName() + "' is already there.");
+        }
         // then save the course
         return ResponseEntity.status(201).body(this.service.addCourse(course));
     }
 
+    @PutMapping("/update/{courseId}")
+    public ResponseEntity<Course> updateCourse(
+            @PathVariable("courseId") Long courseId,
+            @Valid @RequestBody UpdateCourseBody body
+    ) {
+        Course course = this.service.getCourse(courseId);
+        course.setName(body.getName().toUpperCase().trim());
+        course.setCode(body.getCode());
+        course.setDescription(body.getDescription());
+        course.setCategory(body.getCategory());
+        String ext =  course.getCategory().equals(Category.FOUNDATION) ? "F" : "";
+        String displayName = course.getName() + " " + course.getCode() + ext;
+        course.setDisplayName(displayName);
+        return ResponseEntity.status(204).body(this.service.updateCourse(course));
+    }
 
-//    @PutMapping("/update/{animalId}")
-//    public ResponseEntity<Animal> updateAnimal(@PathVariable("animalId") Long animalId, @RequestBody Animal animal){
-//        Animal animal1 = this.service.getAnimal(animalId);
-//        animal1.setName(animal.getName());
-//        return ResponseEntity.status(204).body(this.service.updateAnimal(animal1));
-//    }
-//
-//    @DeleteMapping("/delete/{animalId}")
-//    public ResponseEntity<Boolean> deleteAnimal(@PathVariable("animalId") Long animalId){
-//        return ResponseEntity.status(204).body(this.service.deleteAnimal(animalId));
-//    }
-//
-//    @GetMapping("/animal/{animalId}")
-//    public ResponseEntity<Animal> getAnimal(@PathVariable("animalId") Long animalId){
-//        return ResponseEntity.status(200).body(this.service.getAnimal(animalId));
-//    }
-//
-    @GetMapping
+    @DeleteMapping("/remove/{courseId}")
+    public ResponseEntity<Boolean> deleteCourse(@PathVariable("courseId") Long courseId){
+        this.service.getCourse(courseId);
+        return ResponseEntity.status(204).body(this.service.removeCourse(courseId));
+    }
+
+    @GetMapping("/course/{courseId}")
+    public ResponseEntity<Course> getAnimal(@PathVariable("courseId") Long courseId){
+        return ResponseEntity.status(200).body(this.service.getCourse(courseId));
+    }
+
+    @GetMapping("/all")
     public ResponseEntity<Collection<Course>> getCourses(){
         return ResponseEntity.status(200).body(this.service.getCourses());
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ArrayList<Map<String,String>>  handleValidationExceptions(MethodArgumentNotValidException exception){
+        ArrayList<Map<String,String>> errors = new ArrayList<Map<String, String>>();
+        exception.getBindingResult().getAllErrors().forEach((error)->{
+            Map<String, String> e = new HashMap<>();
+            String field = ((FieldError) error).getField();
+            String message = error.getDefaultMessage();
+            e.put(field, message);
+            e.put("timestamp", new Date().toString());
+            e.put("field", field);
+            errors.add(e);
+        });
+        return errors;
     }
 }

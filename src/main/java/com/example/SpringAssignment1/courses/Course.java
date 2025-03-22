@@ -1,5 +1,7 @@
 package com.example.SpringAssignment1.courses;
 import jakarta.persistence.*;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.io.Serializable;
 
@@ -20,7 +22,7 @@ public class Course implements Serializable {
     @Column(nullable = false, name = "code")
     private int code;
 
-    @Column(nullable = false, name="displayName", unique = true, length = 6)
+    @Column(nullable = false, name="displayName", unique = true, length = 8)
     private  String displayName;
 
     @Column(nullable = false, name = "category")
