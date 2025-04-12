@@ -56,10 +56,15 @@ We created a course table so that it will have the following fields:
 
 1.  `id` -> which is an automatically generated column for each and every course that will be added
 2.  `name` -> the course name which is a string of size `3` e.g. `CSC`
-3.  `description` -> course description.
-4.  `code` -> a number which is the corse code and it should be a number of size `3` e.g. `112`
-5.  `displayName` -> which is the full display name for the course e.g. `CSC 113F`, `CSC 113` and should be unique in the database.
-6.  `category` - the category of the course which was created as a java Enum type of [`HONORS`, `UNDERGRADUATE`, `FOUNDATION`] and in code it looks as follows:
+3.  `instruction` -> course instructions.
+4.  `title` - course title.
+5.  `purpose` -> the purpose of the course.
+6.  `assessments` -> Course assessment details.
+7.  `content` -> Summary of course `content`
+8.  `credits` -> course credits which are `16`, `8` and `12`.
+9.  `code` -> a number which is the corse code and it should be a number of size `3` e.g. `112`
+10. `displayName` -> which is the full display name for the course e.g. `CSC 113F`, `CSC 113` and should be unique in the database.
+11. `category` - the category of the course which was created as a java Enum type of [`HONORS`, `UNDERGRADUATE`, `FOUNDATION`] and in code it looks as follows:
     ```java
     import lombok.Getter;
     @Getter
@@ -76,6 +81,7 @@ We created a course table so that it will have the following fields:
     The whole table implementation in code will look as follows:
 
 ```java
+package com.example.SpringAssignment1.courses;
 import jakarta.persistence.*;
 import lombok.*;
 import java.io.Serializable;
@@ -87,39 +93,60 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class Course implements Serializable {
 
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Id
-    private Long id;
+   @GeneratedValue(strategy = GenerationType.AUTO)
+   @Id
+   private Long id;
 
-    @Column(nullable = false, length = 3, name = "name")
-    private String name;
+   @Column(nullable = false, length = 3, name = "name")
+   private String name;
 
-    @Column(nullable = false, name = "code")
-    private int code;
+   @Column(nullable = false, name = "code")
+   private int code;
 
-    @Column(nullable = false, name="displayName", unique = true, length = 6)
-    private  String displayName;
+   @Column(nullable = false, name = "credits")
+   private int credits;
 
-    @Column(nullable = false, name = "category")
-    private Category category;
+   @Column(nullable = false, name="displayName", unique = true, length = 8)
+   private  String displayName;
 
-    @Column(nullable = false, name = "description", length = 500)
-    private String description;
+   @Column(nullable = false, name="title")
+   private  String title;
+
+   @Column(nullable = false, name = "category")
+   private Category category;
+
+   @Column(nullable = false, name = "purpose", length = 500)
+   private String purpose;
+
+   @Column(nullable = false, name = "content", length = 500)
+   private String content;
+
+   @Column(nullable = false, name = "instruction", length = 500)
+   private String instruction;
+
+   @Column(nullable = false, name = "assessment")
+   private String assessment;
 }
+
 ```
 
 > The sql that was generated for creating the table is:
 
 ```sql
-create table courses (
-    category smallint not null check (category between 0 and 2),
-    code integer not null,
-    name varchar(3) not null,
-    display_name varchar(6) not null unique,
-    id bigint not null,
-    description varchar(500) not null,
-    primary key (id)
-)
+  create table courses (
+        category smallint not null check (category between 0 and 2),
+        code integer not null,
+        credits integer not null,
+        name varchar(3) not null,
+        display_name varchar(8) not null unique,
+        id bigint not null,
+        content varchar(500) not null,
+        instruction varchar(500) not null,
+        purpose varchar(500) not null,
+        assessment varchar(255) not null,
+        title varchar(255) not null,
+        primary key (id)
+
 ```
 
 After creating the `Course` class we created the `CourseRepository` which extends from `JpaRepository` with the table of `Course` and the `Id` of the this table `Course`. We are also going to create another function that will help us to query the course from the database using `jpa` called `findByDisplayName`.
@@ -245,44 +272,103 @@ And we handle the exceptions when the http status `BadRequest` is triggered. `Ad
 ```java
 package com.example.SpringAssignment1.types;
 import com.example.SpringAssignment1.courses.Category;
-import com.example.SpringAssignment1.validators.CourseCategoryValidator;
-import com.example.SpringAssignment1.validators.CourseCodeValidator;
+import com.example.SpringAssignment1.validators.*;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.*;
+import lombok.*;
+
+
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class AddCourseBody {
+   @Valid
+   @NotNull(message = "The course code is required.")
+   @CourseCodeValidator
+   private int code;
 
-    @Valid
-    @NotNull(message = "The course code is required.")
-    @CourseCodeValidator
-    private int code;
+   @NotNull(message = "The course credits are required.")
+   @CourseCreditValidator
+   private int credits;
 
-    @NotNull(message = "The course name is required.")
-    @Size(max = 3, min = 3, message = "The course name must have exactly 3 characters.")
-    private String name;
+   @NotNull(message = "The course name is required.")
+   @Size(max = 3, min = 3, message = "The course name must have exactly 3 characters.")
+   private String name;
+
+   @NotNull(message = "The course title is required.")
+   @Size(message = "The title name must be provided.")
+   private String title;
+
+   @NotNull(message = "The course purpose is required.")
+   @Size(message = "The purpose name must be provided.")
+   private String purpose;
+
+   @NotNull(message = "The course content is required.")
+   @Size(message = "The content name must be provided.")
+   private String content;
+
+   @NotNull(message = "The course instruction is required.")
+   @Size(message = "The instruction name must be provided.")
+   private String instruction;
+
+   @NotNull(message = "The course assessment is required.")
+   @Size(message = "The assessment name must be provided.")
+   private String assessment;
+
+   @NotNull(message = "The course category is required.")
+   @CourseCategoryValidator
+   private Category category;
+
+   @NotNull(message = "The course description is required.")
+   @Size(max = 500, min = 10, message = "The course description must have at least 10 characters and at most 500 characters.")
+   private String description;
+}
 
 
-    @NotNull(message = "The course category is required.")
-    @CourseCategoryValidator
-    private Category category;
 
-    @NotNull(message = "The course description is required.")
-    @Size(max = 500, min = 10, message = "The course description must have at least 10 characters and at most 500 characters.")
-    private String description;
+
+```
+
+We have `3` custom validators for our input which are located in the `validators` package. They helps us to implement our custom error checking on the course code and course category. Here is the code for the annotations.
+
+1. ``
+
+```java
+package com.example.SpringAssignment1.validators;
+import jakarta.validation.*;
+import java.lang.annotation.*;
+
+@Target({ElementType.FIELD, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy = CustomCourseCodeValidator.class)
+public @interface CourseCodeValidator {
+        String message() default  "Invalid course code, the course code must contain exactly 3 digit numbers.";
+        Class<?>[] groups() default {};
+        Class<? extends Payload>[] payload() default {};
 }
 
 ```
 
-We have `2` custom validators for our input which are located in the `validators` package. They helps us to implement our custom error checking on the course code and course category. Here is the code for the annotations.
+In the implementation we have the following.
 
-1. `@CourseCategoryValidator`
+```java
+package com.example.SpringAssignment1.validators;
+import jakarta.validation.*;
+public class CustomCourseCreditValidator implements ConstraintValidator<CourseCodeValidator, Integer> {
+
+    @Override
+    public void initialize(CourseCodeValidator constraintAnnotation) {
+    }
+    @Override
+    public boolean isValid(Integer category, ConstraintValidatorContext context) {
+        return category == 8 || category == 12 || category == 16;
+    }
+}
+
+```
+
+2`@CourseCategoryValidator`
 
 ```java
 import jakarta.validation.Constraint;
@@ -576,9 +662,14 @@ Here are the available routes
    ```json
    {
      "name": "CSC",
-     "code": 133,
-     "category": "FOUNDATION",
-     "description": "This is a computer Science Foundation Course."
+     "code": 517,
+     "credits": 15,
+     "title": "Theory of Computing",
+     "category": "HONOURS",
+     "purpose": "To introduce the various theoretical computing machines and formal language types, and to investigate the limits of computability",
+     "content": "AFinite state automata (deterministic and nondeterministic), pushdown automata, Turing machines, formal languages, computability and complexity, the classes P, NP and NPC.",
+     "instruction": "20 hours of lectures",
+     "assessment": "Continuous assessment based on tests, assignments and practical work, as well as one three-hour final examination as summative assessment."
    }
    ```
 4. GET = `/` => The default route that renders an html about the `API`.
@@ -586,11 +677,18 @@ Here are the available routes
 
    ```json
    {
-     "name": "CSC",
-     "code": 133,
-     "category": "FOUNDATION",
-     "description": "This is a computer Science Foundation Course."
-   }
+   "id": 1,
+   "name": "CSC",
+   "code": 113,
+   "credits": 16,
+   "displayName": "CSC 113",
+   "title": "Introduction to Computing and Programming Concepts",
+   "category": "UNDERGRADUATE",
+   "purpose": "Intended for students who have no previous knowledge of computers and wish to obtain a basic understanding of Compute Science",
+   "content": "Theory: Uses of computers; components of a computer, processor, memory, input devices, output devices; theoretical aspects of word processors, spreadsheets, and databases; computer networks and the Internet; an introduction to basic HTML, algorithms, basic programming concepts using Visual Basic for Applications Practical: Use of the operating system, the file system, word processing, spreadsheets, MS Access, the World Wide Web and electronic mail, programming using Visual Basic for Applications",
+   "instruction": "180 minutes per week of lectures; 120 minutes per week of formal practicals; Self study",
+   "assessment": "Continuous assessment based on tests, assignments and monitored cal work, as well as one three-hour final examination as summative assessment."
+   },
    ```
 
 6. `DELETE`= `http://localhost:3001/api/v1/courses/update/1` - deletes a course from the existing courses.
@@ -602,10 +700,15 @@ Here is the response for all the list of courses.
   {
     "id": 1,
     "name": "CSC",
-    "code": 133,
-    "displayName": "CSC 133",
+    "code": 113,
+    "credits": 16,
+    "displayName": "CSC 113",
+    "title": "Introduction to Computing and Programming Concepts",
     "category": "UNDERGRADUATE",
-    "description": "This is a computer Science Foundation Course."
+    "purpose": "Intended for students who have no previous knowledge of computers and wish to obtain a basic understanding of Compute Science",
+    "content": "Theory: Uses of computers; components of a computer, processor, memory, input devices, output devices; theoretical aspects of word processors, spreadsheets, and databases; computer networks and the Internet; an introduction to basic HTML, algorithms, basic programming concepts using Visual Basic for Applications Practical: Use of the operating system, the file system, word processing, spreadsheets, MS Access, the World Wide Web and electronic mail, programming using Visual Basic for Applications",
+    "instruction": "180 minutes per week of lectures; 120 minutes per week of formal practicals; Self study",
+    "assessment": "Continuous assessment based on tests, assignments and monitored cal work, as well as one three-hour final examination as summative assessment."
   }
 ]
 ```

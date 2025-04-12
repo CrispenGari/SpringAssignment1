@@ -1,5 +1,4 @@
 package com.example.SpringAssignment1.courses;
-
 import com.example.SpringAssignment1.exceptions.CourseAlreadyExistsException;
 import com.example.SpringAssignment1.types.AddCourseBody;
 import com.example.SpringAssignment1.types.UpdateCourseBody;
@@ -8,9 +7,8 @@ import lombok.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.*;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.*;
 
 @RestController
@@ -24,7 +22,14 @@ public class CourseController {
         Course course = new Course();
         course.setName(body.getName().toUpperCase().trim());
         course.setCode(body.getCode());
-        course.setDescription(body.getDescription());
+
+        course.setContent(body.getContent().trim());
+        course.setCredits(body.getCredits());
+        course.setTitle(body.getTitle().trim());
+        course.setAssessment(body.getAssessment().trim());
+        course.setPurpose(body.getPurpose().trim());
+        course.setInstruction(body.getInstruction().trim());
+
         course.setCategory(body.getCategory());
         String ext =  course.getCategory().equals(Category.FOUNDATION) ? "F" : "";
         String displayName = course.getName() + " " + course.getCode() + ext;
@@ -44,7 +49,15 @@ public class CourseController {
         Course course = this.service.getCourse(courseId);
         course.setName(body.getName().toUpperCase().trim());
         course.setCode(body.getCode());
-        course.setDescription(body.getDescription());
+
+        course.setContent(body.getContent().trim());
+        course.setCredits(body.getCredits());
+        course.setTitle(body.getTitle().trim());
+        course.setAssessment(body.getAssessment().trim());
+        course.setPurpose(body.getPurpose().trim());
+        course.setInstruction(body.getInstruction().trim());
+
+
         course.setCategory(body.getCategory());
         String ext =  course.getCategory().equals(Category.FOUNDATION) ? "F" : "";
         String displayName = course.getName() + " " + course.getCode() + ext;

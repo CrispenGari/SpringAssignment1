@@ -5,7 +5,7 @@ import lombok.Getter;
 public enum Category {
 
         FOUNDATION("FOUNDATION"),
-        HONORS("HONORS"),
+        HONOURS("HONOURS"),
         UNDERGRADUATE("UNDERGRADUATE");
 
         private final String category;
