@@ -23,6 +23,8 @@ public class CourseController {
         course.setName(body.getName().toUpperCase().trim());
         course.setCode(body.getCode());
 
+        System.out.println(body.getCategory());
+
         course.setContent(body.getContent().trim());
         course.setCredits(body.getCredits());
         course.setTitle(body.getTitle().trim());

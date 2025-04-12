@@ -326,13 +326,13 @@ public class AddCourseBody {
 }
 
 
-
-
 ```
 
 We have `3` custom validators for our input which are located in the `validators` package. They helps us to implement our custom error checking on the course code and course category. Here is the code for the annotations.
 
-1. ``
+1. `@CourseCreditValidator`
+
+The first thing is we want to validate the course credits based on what have been observed in the prospectus which are one of the values `[8, 12, 16, 15, 50]`.
 
 ```java
 package com.example.SpringAssignment1.validators;
@@ -341,34 +341,35 @@ import java.lang.annotation.*;
 
 @Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = CustomCourseCodeValidator.class)
-public @interface CourseCodeValidator {
-        String message() default  "Invalid course code, the course code must contain exactly 3 digit numbers.";
-        Class<?>[] groups() default {};
-        Class<? extends Payload>[] payload() default {};
+@Constraint(validatedBy = CustomCourseCreditValidator.class)
+public @interface CourseCreditValidator {
+    String message() default  "Invalid course credit, the course credits that are available are [8, 12, 16, 15, 50].";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
 }
+
 
 ```
 
-In the implementation we have the following.
+In the implementation of the `CustomCourseCreditValidator` class we have the following.
 
 ```java
 package com.example.SpringAssignment1.validators;
 import jakarta.validation.*;
-public class CustomCourseCreditValidator implements ConstraintValidator<CourseCodeValidator, Integer> {
+public class CustomCourseCreditValidator implements ConstraintValidator<CourseCreditValidator, Integer> {
 
     @Override
-    public void initialize(CourseCodeValidator constraintAnnotation) {
+    public void initialize(CourseCreditValidator constraintAnnotation) {
     }
     @Override
-    public boolean isValid(Integer category, ConstraintValidatorContext context) {
-        return category == 8 || category == 12 || category == 16;
+    public boolean isValid(Integer credits, ConstraintValidatorContext context) {
+        return credits == 8 || credits == 12 || credits == 16 || credits == 50 || credits == 15;
     }
 }
 
 ```
 
-2`@CourseCategoryValidator`
+2. `@CourseCategoryValidator`
 
 ```java
 import jakarta.validation.Constraint;
@@ -411,7 +412,7 @@ public class CustomCourseCategoryValidator implements ConstraintValidator<Course
 }
 ```
 
-Same applies to teh course codes.
+Same applies to the course codes.
 
 ```java
 import jakarta.validation.Constraint;
@@ -474,37 +475,70 @@ We created a general Exception capture, that captures all the exception that are
 
 ```java
 package com.example.SpringAssignment1.exceptions;
-
 import com.example.SpringAssignment1.types.ErrorType;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
+import com.fasterxml.jackson.core.JsonParseException;
+import org.springframework.http.*;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
-
-import java.util.Date;
+import java.util.*;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
 //    Handling specific exception
     @ExceptionHandler(CourseNotFoundException.class)
     public ResponseEntity<?> courseNotFound(CourseNotFoundException exception, WebRequest request){
-        ErrorType errorType = new ErrorType(new Date(), exception.getMessage(),
-                request.getDescription(false), "course"
+        ArrayList<ErrorType> errors = new ArrayList<>();
+        errors.add(
+                new ErrorType(
+                        new Date(), exception.getMessage(),
+                    request.getDescription(false), "course"
+            )
         );
-        return new ResponseEntity<>(errorType, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(errors, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(CourseAlreadyExistsException.class)
     public ResponseEntity<?> courseAlreadyExists(CourseAlreadyExistsException exception, WebRequest request){
-        ErrorType errorType = new ErrorType(new Date(), exception.getMessage(),
-                request.getDescription(false), "course"
+        ArrayList<ErrorType> errors = new ArrayList<>();
+        errors.add(
+                new ErrorType(
+                        new Date(), exception.getMessage(),
+                        request.getDescription(false), "course"
+                )
         );
-        return new ResponseEntity<>(errorType, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(errors, HttpStatus.OK);
+    }
+
+    @ExceptionHandler(JsonParseException.class)
+    public ResponseEntity<?> errorParsingDataExists(CourseAlreadyExistsException exception, WebRequest request){
+        ArrayList<ErrorType> errors = new ArrayList<>();
+        errors.add(
+                new ErrorType(
+                        new Date(), exception.getMessage(),
+                        request.getDescription(false), "course"
+                )
+        );
+        return new ResponseEntity<>(errors, HttpStatus.OK);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException exception) {
+        ArrayList<Map<String,String>> errors = new ArrayList<Map<String, String>>();
+        Map<String, String> e = new HashMap<>();
+        String field = "body";
+        String message = exception.getMessage();
+        e.put(field, message);
+        e.put("timestamp", new Date().toString());
+        e.put("field", field);
+        errors.add(e);
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
 
-//    //    Global exception handling
+
+
+    //    Global exception handling
 //    @ExceptionHandler(Exception.class)
 //    public ResponseEntity<?> globalExceptionHandling(Exception exception, WebRequest request){
 //        return new ResponseEntity<>(
@@ -512,8 +546,6 @@ public class GlobalExceptionHandler {
 //                , HttpStatus.INTERNAL_SERVER_ERROR);
 //    }
 }
-
-
 ```
 
 A `CourseNotFoundException` is just a custom exception that get thrown when we did not find the course:
@@ -563,8 +595,8 @@ public class ErrorType {
 A lot of magic is held in the heart of the API which is the `CourseController` class. This is where http request method are being defined to match the routes we expect from the user.
 
 ```java
-package com.example.SpringAssignment1.courses;
 
+package com.example.SpringAssignment1.courses;
 import com.example.SpringAssignment1.exceptions.CourseAlreadyExistsException;
 import com.example.SpringAssignment1.types.AddCourseBody;
 import com.example.SpringAssignment1.types.UpdateCourseBody;
@@ -573,9 +605,8 @@ import lombok.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.*;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.*;
 
 @RestController
@@ -589,7 +620,16 @@ public class CourseController {
         Course course = new Course();
         course.setName(body.getName().toUpperCase().trim());
         course.setCode(body.getCode());
-        course.setDescription(body.getDescription());
+
+        System.out.println(body.getCategory());
+
+        course.setContent(body.getContent().trim());
+        course.setCredits(body.getCredits());
+        course.setTitle(body.getTitle().trim());
+        course.setAssessment(body.getAssessment().trim());
+        course.setPurpose(body.getPurpose().trim());
+        course.setInstruction(body.getInstruction().trim());
+
         course.setCategory(body.getCategory());
         String ext =  course.getCategory().equals(Category.FOUNDATION) ? "F" : "";
         String displayName = course.getName() + " " + course.getCode() + ext;
@@ -609,7 +649,15 @@ public class CourseController {
         Course course = this.service.getCourse(courseId);
         course.setName(body.getName().toUpperCase().trim());
         course.setCode(body.getCode());
-        course.setDescription(body.getDescription());
+
+        course.setContent(body.getContent().trim());
+        course.setCredits(body.getCredits());
+        course.setTitle(body.getTitle().trim());
+        course.setAssessment(body.getAssessment().trim());
+        course.setPurpose(body.getPurpose().trim());
+        course.setInstruction(body.getInstruction().trim());
+
+
         course.setCategory(body.getCategory());
         String ext =  course.getCategory().equals(Category.FOUNDATION) ? "F" : "";
         String displayName = course.getName() + " " + course.getCode() + ext;

@@ -1,16 +1,11 @@
 package com.example.SpringAssignment1.exceptions;
-
 import com.example.SpringAssignment1.types.ErrorType;
 import com.fasterxml.jackson.core.JsonParseException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
-
-import java.util.ArrayList;
-import java.util.Date;
+import java.util.*;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -50,6 +45,20 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(errors, HttpStatus.OK);
     }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException exception) {
+        ArrayList<Map<String,String>> errors = new ArrayList<Map<String, String>>();
+        Map<String, String> e = new HashMap<>();
+        String field = "body";
+        String message = exception.getMessage();
+        e.put(field, message);
+        e.put("timestamp", new Date().toString());
+        e.put("field", field);
+        errors.add(e);
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
+
 
 
 

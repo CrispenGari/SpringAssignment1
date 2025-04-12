@@ -6,7 +6,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = CustomCourseCreditValidator.class)
 public @interface CourseCreditValidator {
-    String message() default  "Invalid course credit, the course credits that are available are [8, 12, 16].";
+    String message() default  "Invalid course credit, the course credits that are available are [8, 12, 16, 15, 50].";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }
