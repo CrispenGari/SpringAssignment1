@@ -152,18 +152,19 @@ public class Course implements Serializable {
 After creating the `Course` class we created the `CourseRepository` which extends from `JpaRepository` with the table of `Course` and the `Id` of the this table `Course`. We are also going to create another function that will help us to query the course from the database using `jpa` called `findByDisplayName`.
 
 ```java
+package com.example.SpringAssignment1.courses;
 import org.springframework.data.jpa.repository.JpaRepository;
-import java.util.Optional;
-
+import java.util.*;
 public interface CourseRepository extends JpaRepository<Course, Long> {
     Optional<Course> findByDisplayName(String displayName);
-
+    Collection<Course> findByCategory(Category category);
 }
 ```
 
 We created another interface called `CourseServiceInterface` which defines the methods that we will implement in on the course. Basically we are performing the `CRUD` operations on the `course` table.
 
 ```java
+package com.example.SpringAssignment1.courses;
 import java.util.Collection;
 
 public interface CourseServiceInterface {
@@ -172,6 +173,8 @@ public interface CourseServiceInterface {
     Boolean removeCourse(Long id);
     Course updateCourse(Course course);
     Collection<Course> getCourses();
+    Boolean isCourseAvailable(String displayName);
+    Collection<Course> getGroupedCourses(Category category);
 }
 
 ```
@@ -179,13 +182,12 @@ public interface CourseServiceInterface {
 Then following a `CourseService` class that does everything that has to do with `Creating`, `Reading`, `Updating`, `Deleting` of course.
 
 ```java
+package com.example.SpringAssignment1.courses;
 import com.example.SpringAssignment1.exceptions.CourseNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.Collection;
-
+import java.util.*;
 
 @Service
 @Transactional
@@ -203,6 +205,17 @@ public class CourseService implements CourseServiceInterface {
         return this.repository.findById(id).orElseThrow(
                 ()->new CourseNotFoundException("The course with id: '" + id + "' was not found.")
         );
+    }
+
+    @Override
+    public Boolean isCourseAvailable(String displayName){
+        Optional<Course> c = this.repository.findByDisplayName(displayName);
+        return  c.isPresent();
+    }
+
+    @Override
+    public Collection<Course> getGroupedCourses(Category category) {
+        return this.repository.findByCategory(category).stream().toList();
     }
 
     @Override
@@ -481,6 +494,8 @@ import org.springframework.http.*;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+
 import java.util.*;
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -535,8 +550,15 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
-
-
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Object> handleResourceNotFound(NoResourceFoundException ex) {
+        Map<String, Object> errorDetails = new HashMap<>();
+        errorDetails.put("error", "Resource not found");
+        errorDetails.put("message", ex.getMessage());
+        errorDetails.put("timestamp", new Date());
+        errorDetails.put("path", ex.getResourcePath());
+        return new ResponseEntity<>(errorDetails, HttpStatus.NOT_FOUND);
+    }
 
     //    Global exception handling
 //    @ExceptionHandler(Exception.class)
@@ -546,6 +568,7 @@ public class GlobalExceptionHandler {
 //                , HttpStatus.INTERNAL_SERVER_ERROR);
 //    }
 }
+
 ```
 
 A `CourseNotFoundException` is just a custom exception that get thrown when we did not find the course:
@@ -602,6 +625,7 @@ import com.example.SpringAssignment1.types.AddCourseBody;
 import com.example.SpringAssignment1.types.UpdateCourseBody;
 import jakarta.validation.Valid;
 import lombok.*;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -672,13 +696,41 @@ public class CourseController {
     }
 
     @GetMapping("/course/{courseId}")
-    public ResponseEntity<Course> getAnimal(@PathVariable("courseId") Long courseId){
+    public ResponseEntity<Course> getCourse(@PathVariable("courseId") Long courseId){
         return ResponseEntity.status(200).body(this.service.getCourse(courseId));
     }
 
+
+    @GetMapping("/category/{category}")
+    public ResponseEntity<Collection<Course>> getCoursesByCategory(
+            @PathVariable("category") String category
+    ) {
+        if(category.equalsIgnoreCase("undergraduate")){
+            return ResponseEntity.status(200).body(this.service.getGroupedCourses(Category.UNDERGRADUATE));
+        }else if(category.equalsIgnoreCase("honours")){
+            return ResponseEntity.status(200).body(this.service.getGroupedCourses(Category.HONOURS));
+        }else if(category.equalsIgnoreCase("foundation")){
+            return ResponseEntity.status(200).body(this.service.getGroupedCourses(Category.FOUNDATION));
+        }else{
+            return ResponseEntity.status(200).body(this.service.getCourses());
+        }
+    }
+
     @GetMapping("/all")
-    public ResponseEntity<Collection<Course>> getCourses(){
-        return ResponseEntity.status(200).body(this.service.getCourses());
+    public ResponseEntity<Map<String, Collection<Course>>> getCourses(
+            @RequestParam(required = false) boolean group
+    ){
+        if(group){
+            Map<String, Collection<Course>> courses = new HashMap<>();
+            courses.put("UNDERGRADUATE", this.service.getGroupedCourses(Category.UNDERGRADUATE));
+            courses.put("HONOURS", this.service.getGroupedCourses(Category.HONOURS));
+            courses.put("FOUNDATION", this.service.getGroupedCourses(Category.FOUNDATION));
+            System.out.println(courses);
+            return ResponseEntity.status(200).body(courses);
+        }
+        return ResponseEntity.status(200).body(
+                Map.of("ALL", this.service.getCourses())
+        );
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -705,6 +757,70 @@ public class CourseController {
 Here are the available routes
 
 1. `GET` = `http://localhost:3001/api/v1/courses/all` - getting all the courses
+
+```json
+{
+  "ALL": [
+    {
+      "id": 1,
+      "name": "CSC",
+      "code": 113,
+      "credits": 16,
+      "displayName": "CSC 113",
+      "title": "Introduction to Computing and Programming Concepts",
+      "category": "UNDERGRADUATE",
+      "purpose": "Intended for students who have no previous knowledge of computers and wish to obtain a basic understanding of Compute Science",
+      "content": "Theory: Uses of computers; components of a computer, processor, memory, input devices, output devices; theoretical aspects of word processors, spreadsheets, and databases; computer networks and the Internet; an introduction to basic HTML, algorithms, basic programming concepts using Visual Basic for Applications Practical: Use of the operating system, the file system, word processing, spreadsheets, MS Access, the World Wide Web and electronic mail, programming using Visual Basic for Applications",
+      "instruction": "180 minutes per week of lectures; 120 minutes per week of formal practicals; Self study",
+      "assessment": "Continuous assessment based on tests, assignments and monitored cal work, as well as one three-hour final examination as summative assessment."
+    }
+  ]
+}
+```
+
+2. `GET` = `http://localhost:3001/api/v1/courses/all?group=true` - getting the grouped coursed based on the category.
+
+```json
+{
+  "HONOURS": [],
+  "FOUNDATION": [],
+  "UNDERGRADUATE": []
+}
+```
+
+3. `GET` = `http://localhost:3001/api/v1/courses/category/{category}` - getting categorized courses in categories [`foundation`, `undergraduate`, `honours`].
+
+```json
+[
+  {
+    "id": 3,
+    "name": "CSC",
+    "code": 121,
+    "credits": 16,
+    "displayName": "CSC 121F",
+    "title": "Elementary Computer Programming",
+    "category": "FOUNDATION",
+    "purpose": "Introduce computer programming and algorithmics using a programming language such as Visual Basic, C++ or Java.",
+    "content": "The programming environment; variables and declarations; conditional statements; file I/O; use of functions and procedures; repetition using the For and While loop; the ASCII character set; arrays; structures / records; graphics; design of algorithms.",
+    "instruction": "180 minutes per week of lectures; 120 minutes per week of formal practicals; Self study",
+    "assessment": "Continuous assessment based on tests, assignments and monitored cal work, as well as one three-hour final examination as summative assessment."
+  },
+  {
+    "id": 4,
+    "name": "CSC",
+    "code": 113,
+    "credits": 16,
+    "displayName": "CSC 113F",
+    "title": "Introduction to Computing and Programming Concepts",
+    "category": "FOUNDATION",
+    "purpose": "Intended for students who have no previous knowledge of computers and wish to obtain a basic understanding of Compute Science",
+    "content": "Theory: Uses of computers; components of a computer, processor, memory, input devices, output devices; theoretical aspects of word processors, spreadsheets, and databases; computer networks and the Internet; an introduction to basic HTML, algorithms, basic programming concepts using Visual Basic for Applications Practical: Use of the operating system, the file system, word processing, spreadsheets, MS Access, the World Wide Web and electronic mail, programming using Visual Basic for Applications",
+    "instruction": "180 minutes per week of lectures; 120 minutes per week of formal practicals; Self study",
+    "assessment": "Continuous assessment based on tests, assignments and monitored cal work, as well as one three-hour final examination as summative assessment."
+  }
+]
+```
+
 2. `GET` = `http://localhost:3001/api/v1/courses/course/1` - getting the course with id `1`.
 3. `POST` = `http://localhost:3001/api/v1/courses/add` - adding a new course, with the request body that looks as follows:
    ```json
@@ -740,26 +856,6 @@ Here are the available routes
    ```
 
 6. `DELETE`= `http://localhost:3001/api/v1/courses/update/1` - deletes a course from the existing courses.
-
-Here is the response for all the list of courses.
-
-```json
-[
-  {
-    "id": 1,
-    "name": "CSC",
-    "code": 113,
-    "credits": 16,
-    "displayName": "CSC 113",
-    "title": "Introduction to Computing and Programming Concepts",
-    "category": "UNDERGRADUATE",
-    "purpose": "Intended for students who have no previous knowledge of computers and wish to obtain a basic understanding of Compute Science",
-    "content": "Theory: Uses of computers; components of a computer, processor, memory, input devices, output devices; theoretical aspects of word processors, spreadsheets, and databases; computer networks and the Internet; an introduction to basic HTML, algorithms, basic programming concepts using Visual Basic for Applications Practical: Use of the operating system, the file system, word processing, spreadsheets, MS Access, the World Wide Web and electronic mail, programming using Visual Basic for Applications",
-    "instruction": "180 minutes per week of lectures; 120 minutes per week of formal practicals; Self study",
-    "assessment": "Continuous assessment based on tests, assignments and monitored cal work, as well as one three-hour final examination as summative assessment."
-  }
-]
-```
 
 ### Cross Recourse Origin Sharing (`CORS`).
 

@@ -1,13 +1,9 @@
 package com.example.SpringAssignment1.courses;
-
 import com.example.SpringAssignment1.exceptions.CourseNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.Collection;
-import java.util.Optional;
-
+import java.util.*;
 
 @Service
 @Transactional
@@ -31,6 +27,11 @@ public class CourseService implements CourseServiceInterface {
     public Boolean isCourseAvailable(String displayName){
         Optional<Course> c = this.repository.findByDisplayName(displayName);
         return  c.isPresent();
+    }
+
+    @Override
+    public Collection<Course> getGroupedCourses(Category category) {
+        return this.repository.findByCategory(category).stream().toList();
     }
 
     @Override

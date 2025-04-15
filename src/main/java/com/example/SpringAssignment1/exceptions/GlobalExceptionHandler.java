@@ -5,6 +5,8 @@ import org.springframework.http.*;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+
 import java.util.*;
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -59,8 +61,15 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
-
-
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Object> handleResourceNotFound(NoResourceFoundException ex) {
+        Map<String, Object> errorDetails = new HashMap<>();
+        errorDetails.put("error", "Resource not found");
+        errorDetails.put("message", ex.getMessage());
+        errorDetails.put("timestamp", new Date());
+        errorDetails.put("path", ex.getResourcePath());
+        return new ResponseEntity<>(errorDetails, HttpStatus.NOT_FOUND);
+    }
 
     //    Global exception handling
 //    @ExceptionHandler(Exception.class)

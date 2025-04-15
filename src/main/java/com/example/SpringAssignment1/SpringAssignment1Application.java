@@ -19,7 +19,7 @@ public class SpringAssignment1Application {
 	}
 	@GetMapping
 	public String hi(){
-		return "<p>Hello, welcome to our web API for Computer Science Department Courses. See all courses <a href='/api/v1/courses/all'>HERE</a>.</p>";
+		return "<p>Hello, welcome to our web API for Computer Science Department Courses. See all courses <a href='/api/v1/courses/all'>HERE</a>. For grouped courses you can click <a href='http://localhost:3001/api/v1/courses/all?group=true'>HERE</p>.</p>";
 	}
 
 	@Bean

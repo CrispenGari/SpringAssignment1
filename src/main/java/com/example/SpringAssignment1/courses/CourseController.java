@@ -4,6 +4,7 @@ import com.example.SpringAssignment1.types.AddCourseBody;
 import com.example.SpringAssignment1.types.UpdateCourseBody;
 import jakarta.validation.Valid;
 import lombok.*;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -74,13 +75,41 @@ public class CourseController {
     }
 
     @GetMapping("/course/{courseId}")
-    public ResponseEntity<Course> getAnimal(@PathVariable("courseId") Long courseId){
+    public ResponseEntity<Course> getCourse(@PathVariable("courseId") Long courseId){
         return ResponseEntity.status(200).body(this.service.getCourse(courseId));
     }
 
+
+    @GetMapping("/category/{category}")
+    public ResponseEntity<Collection<Course>> getCoursesByCategory(
+            @PathVariable("category") String category
+    ) {
+        if(category.equalsIgnoreCase("undergraduate")){
+            return ResponseEntity.status(200).body(this.service.getGroupedCourses(Category.UNDERGRADUATE));
+        }else if(category.equalsIgnoreCase("honours")){
+            return ResponseEntity.status(200).body(this.service.getGroupedCourses(Category.HONOURS));
+        }else if(category.equalsIgnoreCase("foundation")){
+            return ResponseEntity.status(200).body(this.service.getGroupedCourses(Category.FOUNDATION));
+        }else{
+            return ResponseEntity.status(200).body(this.service.getCourses());
+        }
+    }
+
     @GetMapping("/all")
-    public ResponseEntity<Collection<Course>> getCourses(){
-        return ResponseEntity.status(200).body(this.service.getCourses());
+    public ResponseEntity<Map<String, Collection<Course>>> getCourses(
+            @RequestParam(required = false) boolean group
+    ){
+        if(group){
+            Map<String, Collection<Course>> courses = new HashMap<>();
+            courses.put("UNDERGRADUATE", this.service.getGroupedCourses(Category.UNDERGRADUATE));
+            courses.put("HONOURS", this.service.getGroupedCourses(Category.HONOURS));
+            courses.put("FOUNDATION", this.service.getGroupedCourses(Category.FOUNDATION));
+            System.out.println(courses);
+            return ResponseEntity.status(200).body(courses);
+        }
+        return ResponseEntity.status(200).body(
+                Map.of("ALL", this.service.getCourses())
+        );
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)

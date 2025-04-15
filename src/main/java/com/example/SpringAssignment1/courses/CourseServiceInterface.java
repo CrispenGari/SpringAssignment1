@@ -8,4 +8,5 @@ public interface CourseServiceInterface {
     Course updateCourse(Course course);
     Collection<Course> getCourses();
     Boolean isCourseAvailable(String displayName);
+    Collection<Course> getGroupedCourses(Category category);
 }
