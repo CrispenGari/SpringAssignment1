@@ -2,6 +2,63 @@
 
 🕸️ Introduction to web APIs using Spring and Java Assignment. Group Assignment. This read me file will detail all the code explanation and how we go about solving the assignment problem. This assignment was for testing Java Developers their capability in using Springboot to build a basic `CRUD` `REST` Web `API` with error handling.
 
+<p align="center">
+  <a href="https://github.com/CrispenGari/SpringAssignment1/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License: MIT">
+  </a>
+  <a href="https://www.java.com/">
+    <img src="https://img.shields.io/badge/language-java-red.svg" alt="Language: Java">
+  </a>
+</p>
+
+### 🤝 Collaborators
+
+Thanks to these amazing people for their contributions:
+
+<table align="center">
+  <tr>
+    <td align="center">
+      <a href="https://github.com/ThibazaMlambo">
+        <img src="https://github.com/ThibazaMlambo.png" width="80px;" alt="The ThibazaMlambo"/>
+        <br /><sub><b>Thibaza Mlambo</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/CrispenGari">
+        <img src="https://github.com/CrispenGari.png" width="80px;" alt="Crispen Gari"/>
+        <br /><sub><b>Crispen Gari</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/DbyProsper">
+        <img src="https://github.com/DbyProsper.png" width="80px;" alt="The DbyProsper"/>
+        <br /><sub><b>Prosper Masuku</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/PNomnga">
+        <img src="https://github.com/PNomnga.png" width="80px;" alt="The PNomnga"/>
+        <br /><sub><b>P. Nomnga</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/Kingsleyxelo">
+        <img src="https://github.com/Kingsleyxelo.png" width="80px;" alt="The Kingsleyxelo"/>
+        <br /><sub><b>Kingsleyxelo</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/siphocraig">
+        <img src="https://github.com/siphocraig.png" width="80px;" alt="The siphocraig"/>
+        <br /><sub><b>siphocraig</b></sub>
+      </a>
+    </td>
+  
+  </tr>
+</table>
+
+### Tech Stack
+
 We used teh following technologies in this project:
 
 1. `Postgres` - As the database.
