@@ -24,8 +24,6 @@ public class CourseController {
         course.setName(body.getName().toUpperCase().trim());
         course.setCode(body.getCode());
 
-        System.out.println(body.getCategory());
-
         course.setContent(body.getContent().trim());
         course.setCredits(body.getCredits());
         course.setTitle(body.getTitle().trim());
@@ -60,12 +58,11 @@ public class CourseController {
         course.setPurpose(body.getPurpose().trim());
         course.setInstruction(body.getInstruction().trim());
 
-
         course.setCategory(body.getCategory());
         String ext =  course.getCategory().equals(Category.FOUNDATION) ? "F" : "";
         String displayName = course.getName() + " " + course.getCode() + ext;
         course.setDisplayName(displayName);
-        return ResponseEntity.status(204).body(this.service.updateCourse(course));
+        return ResponseEntity.status(201).body(this.service.updateCourse(course));
     }
 
     @DeleteMapping("/remove/{courseId}")

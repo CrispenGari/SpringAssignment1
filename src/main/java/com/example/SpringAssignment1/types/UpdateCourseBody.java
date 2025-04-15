@@ -27,7 +27,7 @@ public class UpdateCourseBody {
     private String title;
 
     @NotNull(message = "The course purpose is required.")
-    @Size(message = "The purpose name must be provided.")
+    @Size(max = 500, min = 10, message = "The purpose name must be provided with at least 10 characters and at most 500 characters.")
     private String purpose;
 
     @NotNull(message = "The course content is required.")
@@ -45,8 +45,4 @@ public class UpdateCourseBody {
     @NotNull(message = "The course category is required.")
     @CourseCategoryValidator
     private Category category;
-
-    @NotNull(message = "The course description is required.")
-    @Size(max = 500, min = 10, message = "The course description must have at least 10 characters and at most 500 characters.")
-    private String description;
 }
